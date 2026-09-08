@@ -100,6 +100,7 @@ typedef struct {
     jdm_alloc_type_t type;
     size_t alignment; // 0 yields default, otherwise supplied is used
     size_t capacity; // 0 yields 1MB, otherwise supplied is used
+    size_t chunk_size; // 0 yields default (1KB), otherwise supplied is used
     // custom types
     jdm_alloc_funcs_t* funcs;
     pointer user_data;

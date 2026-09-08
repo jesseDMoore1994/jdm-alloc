@@ -12,6 +12,7 @@ set(SOURCES
     src/jdm-alloc-default.c
     src/jdm-alloc-arena.c
     src/jdm-alloc-stack.c
+    src/jdm-alloc-pool.c
     src/jdm-alloc-custom.c
     src/jdm-alloc-unimplemented.c
     src/jdm-alloc.c
@@ -34,6 +35,10 @@ add_test(NAME test-jdm-alloc-arena COMMAND test-jdm-alloc-arena)
 add_executable(test-jdm-alloc-stack tests/test-jdm-alloc-stack.c)
 target_link_libraries(test-jdm-alloc-stack PRIVATE jdm-alloc)
 add_test(NAME test-jdm-alloc-stack COMMAND test-jdm-alloc-stack)
+
+add_executable(test-jdm-alloc-pool tests/test-jdm-alloc-pool.c)
+target_link_libraries(test-jdm-alloc-pool PRIVATE jdm-alloc)
+add_test(NAME test-jdm-alloc-pool COMMAND test-jdm-alloc-pool)
 
 # Enable testing
 enable_testing()
@@ -93,6 +98,6 @@ install(TARGETS jdm-alloc
     LIBRARY DESTINATION lib
 )    
 install(DIRECTORY include/ DESTINATION include)
-install(TARGETS test-jdm-alloc test-jdm-alloc-arena test-jdm-alloc-stack
+install(TARGETS test-jdm-alloc test-jdm-alloc-arena test-jdm-alloc-stack test-jdm-alloc-pool
     RUNTIME DESTINATION bin
 )

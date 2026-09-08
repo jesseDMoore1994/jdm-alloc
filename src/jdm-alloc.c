@@ -3,6 +3,7 @@
 #include "jdm-alloc-default.h"
 #include "jdm-alloc-arena.h"
 #include "jdm-alloc-stack.h"
+#include "jdm-alloc-pool.h"
 #include "jdm-alloc-custom.h"
 #include "jdm-alloc-unimplemented.h"
 
@@ -22,6 +23,7 @@ jdm_alloc_t* jdm_alloc_create(const jdm_alloc_config_t cfg) {
         case JDM_ALLOC_STACK:
             return jdm_alloc_create_stack(cfg);
         case JDM_ALLOC_POOL:
+            return jdm_alloc_create_pool(cfg);
         case JDM_ALLOC_FREE_LIST:
             return jdm_alloc_create_unimplemented(cfg);
         case JDM_ALLOC_CUSTOM:
@@ -45,7 +47,10 @@ void jdm_alloc_destroy(jdm_alloc_t* alloc) {
             break;
         case JDM_ALLOC_STACK:
             jdm_alloc_destroy_stack(alloc);
+            break;
         case JDM_ALLOC_POOL:
+            jdm_alloc_destroy_pool(alloc);
+            break;
         case JDM_ALLOC_FREE_LIST:
             jdm_alloc_destroy_unimplemented(alloc);
             break;

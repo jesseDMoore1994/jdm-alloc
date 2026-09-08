@@ -20,7 +20,11 @@ static inline size_t get_default_alignment() {
 };
 
 static inline size_t get_default_capacity() {
-    return 1024 * 1024; // 1 MB default arena size
+    return 1024 * 1024; // 1 MB default backing size
+};
+
+static inline size_t get_default_chunk_size() {
+    return 1024; // 1 KB default chunk size
 };
 
 #endif // JDM_ALLOC_INTERNAL_H
