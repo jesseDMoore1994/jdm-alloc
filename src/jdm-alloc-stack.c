@@ -9,6 +9,7 @@
 typedef struct {
     u8* memory;        // pointer to the memory block
     size_t size;       // total size of the memory block
+    size_t start;      // starting offset in the memory block
     size_t offset;     // current offset in the memory block
     size_t alignment;  // alignment for allocations
 } jdm_stack_t;
@@ -73,6 +74,9 @@ static void* stack_alloc(jdm_alloc_t* alloc, size_t size) {
         stack->alignment = 128;
     }
 
+    fprintf(stderr, "stack_alloc initial: size=%zu, offset=%zu, capacity=%zu\n", size,
+            stack->offset, stack->size);
+
     curr_addr = (uintptr_t)stack->memory + (uintptr_t)stack->offset;
     padding = calc_padding_with_header(curr_addr, (uintptr_t)stack->alignment,
                                        sizeof(jdm_stack_header_t));
@@ -82,12 +86,18 @@ static void* stack_alloc(jdm_alloc_t* alloc, size_t size) {
     }
     stack->offset += padding;
 
+    fprintf(stderr, "stack_alloc after padding: size=%zu, offset=%zu, capacity=%zu\n", size,
+            stack->offset, stack->size);
+
     next_addr = curr_addr + (uintptr_t)padding;
     header = (jdm_stack_header_t*)(next_addr - sizeof(jdm_stack_header_t));
     header->padding = (uint8_t)padding;
     header->size = size;
 
     stack->offset += size;
+
+    fprintf(stderr, "stack_alloc finalize: size=%zu, offset=%zu, capacity=%zu\n", size,
+            stack->offset, stack->size);
 
     return memset((void*)next_addr, 0, size);
 }
@@ -227,6 +237,7 @@ jdm_alloc_t* jdm_alloc_create_stack(jdm_alloc_config_t cfg) {
     JDM_COPY_MEMORY(&alloc->funcs, &stack_funcs, sizeof(jdm_alloc_funcs_t));
     stack->size = capacity_plus_structs;
     stack->memory = memory;
+    stack->start = offset;
     stack->offset = offset;
     stack->alignment = alignment;
     alloc->internal_data = stack;
@@ -257,7 +268,7 @@ jdm_alloc_stats_t jdm_alloc_get_stats_stack(jdm_alloc_t* alloc) {
     }
     jdm_stack_t* stack = (jdm_stack_t*)alloc->internal_data;
     stats.type = JDM_ALLOC_STACK;
-    stats.stack.stack_capacity = stack->size;
-    stats.stack.stack_used = stack->offset;
+    stats.stack.stack_capacity = stack->size - stack->start;
+    stats.stack.stack_used = stack->offset - stack->start;
     return stats;
 }

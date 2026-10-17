@@ -333,7 +333,7 @@ jdm_alloc_t* jdm_alloc_create_freelist(jdm_alloc_config_t cfg) {
 
     freelist->memory = memory;
     freelist->start = memory + current_offset;
-    freelist->size = capacity - current_offset;
+    freelist->size = capacity_plus_structs - current_offset;
     freelist->alignment = alignment;
     freelist->head = NULL;
     freelist->placement = JDM_FREELIST_PLACEMENT_BEST_FIT;

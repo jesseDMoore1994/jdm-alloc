@@ -11,6 +11,7 @@
 typedef struct {
     u8* memory;          // pointer to the memory block
     size_t size;         // total size of the memory block
+    size_t start;        // starting offset in the memory block
     size_t curr_offset;  // current offset in the memory block
     size_t prev_offset;  // previous offset in the memory block
     size_t alignment;    // alignment for allocations
@@ -153,6 +154,7 @@ jdm_alloc_t* jdm_alloc_create_arena(jdm_alloc_config_t cfg) {
     JDM_COPY_MEMORY(&alloc->funcs, &arena_funcs, sizeof(jdm_alloc_funcs_t));
     arena->size = capacity_plus_structs;
     arena->memory = memory;
+    arena->start = current_offset;
     arena->curr_offset = current_offset;
     arena->prev_offset = current_offset;
     arena->alignment = alignment;
@@ -266,7 +268,7 @@ jdm_alloc_stats_t jdm_alloc_get_stats_arena(jdm_alloc_t* alloc) {
     }
     jdm_arena_t* arena = (jdm_arena_t*)alloc->internal_data;
     stats.type = JDM_ALLOC_ARENA;
-    stats.arena.arena_capacity = arena->size;
-    stats.arena.arena_used = arena->curr_offset;
+    stats.arena.arena_capacity = arena->size - arena->start;
+    stats.arena.arena_used = arena->curr_offset - arena->start;
     return stats;
 }

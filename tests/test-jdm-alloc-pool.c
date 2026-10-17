@@ -41,6 +41,51 @@ static int test_pool_allocator(void) {
     return EXIT_SUCCESS;
 }
 
+static int test_pool_allocator_stats(void) {
+    size_t chunk_size = 64;
+    size_t num_chunks = 10;
+    size_t total_size = chunk_size * num_chunks;
+    jdm_alloc_config_t cfg = {.type = JDM_ALLOC_POOL,
+                              .pool = {
+                                  .capacity = total_size,
+                                  .chunk_size = chunk_size,
+                              }};
+
+    jdm_alloc_t* alloc = jdm_alloc_create(cfg);
+    if (!alloc) {
+        fprintf(stderr, "Failed to create pool\n");
+        return EXIT_FAILURE;
+    }
+
+    jdm_alloc_stats_t stats_before = jdm_alloc_get_stats(alloc);
+    if (stats_before.pool.chunk_used != 0) {
+        fprintf(stderr, "Expected 0 chunks used before allocation, got %zu\n",
+                stats_before.pool.chunk_used);
+        jdm_alloc_destroy(alloc);
+        return EXIT_FAILURE;
+    }
+
+    void* chunk = jdm_alloc(alloc, chunk_size);
+    if (!chunk) {
+        fprintf(stderr, "Failed to allocate chunk\n");
+        jdm_alloc_destroy(alloc);
+        return EXIT_FAILURE;
+    }
+
+    jdm_alloc_stats_t stats_after = jdm_alloc_get_stats(alloc);
+    if (stats_after.pool.chunk_used != 1) {
+        fprintf(stderr, "Expected 1 chunk used after allocation, got %zu\n",
+                stats_after.pool.chunk_used);
+        jdm_free(alloc, chunk);
+        jdm_alloc_destroy(alloc);
+        return EXIT_FAILURE;
+    }
+
+    jdm_free(alloc, chunk);
+    jdm_alloc_destroy(alloc);
+    return EXIT_SUCCESS;
+}
+
 int main(int argc, char** argv) {
     if (test_pool_allocator() != EXIT_SUCCESS) {
         fprintf(stderr, "Pool allocator test failed\n");

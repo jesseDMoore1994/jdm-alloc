@@ -131,9 +131,120 @@ static int test_arena_allocator(void) {
     return EXIT_SUCCESS;
 }
 
+static int test_arena_checkpoint(void) {
+    size_t capacity = 4096;
+    jdm_alloc_config_t cfg = {
+        .type = JDM_ALLOC_ARENA,
+        .arena = {.capacity = capacity},
+    };
+    jdm_alloc_t* alloc = jdm_alloc_create(cfg);
+    if (!alloc) {
+        fprintf(stderr, "Failed to create arena\n");
+        return EXIT_FAILURE;
+    }
+
+    size_t size = 1024;
+    void* ptr = jdm_alloc(alloc, size);
+    if (!ptr) {
+        fprintf(stderr, "Failed to alloc in arena\n");
+        return EXIT_FAILURE;
+    }
+
+    jdm_alloc_arena_checkpoint_t checkpoint =
+        jdm_alloc_arena_create_checkpoint(alloc);
+
+    if (checkpoint.curr_offset != jdm_alloc_arena_get_current_offset(alloc)) {
+        fprintf(stderr, "Checkpoint current offset does not match\n");
+        return EXIT_FAILURE;
+    }
+    if (checkpoint.prev_offset != jdm_alloc_arena_get_previous_offset(alloc)) {
+        fprintf(stderr, "Checkpoint previous offset does not match\n");
+        return EXIT_FAILURE;
+    }
+
+    // Allocate some more memory
+    void* ptr2 = jdm_alloc(alloc, size);
+    if (!ptr2) {
+        fprintf(stderr, "Failed to alloc in arena\n");
+        return EXIT_FAILURE;
+    }
+
+    // get new checkpoint and validate that it is different from the previous one
+    jdm_alloc_arena_checkpoint_t checkpoint2 =
+        jdm_alloc_arena_create_checkpoint(alloc);
+    if (checkpoint2.curr_offset == checkpoint.curr_offset) {
+        fprintf(stderr, "Checkpoint current offset did not change\n");
+        return EXIT_FAILURE;
+    }
+    if (checkpoint2.prev_offset == checkpoint.prev_offset) {
+        fprintf(stderr, "Checkpoint previous offset did not change\n");
+        return EXIT_FAILURE;
+    }
+
+    // Restore the first checkpoint and validate that the offsets are restored
+    jdm_alloc_arena_checkpoint_t checkpoint3 = checkpoint;
+    jdm_alloc_arena_restore_checkpoint(alloc, checkpoint3);
+    if (checkpoint3.curr_offset != checkpoint.curr_offset) {
+        fprintf(stderr, "Restored checkpoint current offset does not match\n");
+        return EXIT_FAILURE;
+    }
+    if (checkpoint3.prev_offset != checkpoint.prev_offset) {
+        fprintf(stderr, "Restored checkpoint previous offset does not match\n");
+        return EXIT_FAILURE;
+    } 
+
+    jdm_alloc_destroy(alloc);
+    return EXIT_SUCCESS;
+}
+
+static int test_arena_stats(void) {
+    size_t capacity = 4096;
+    jdm_alloc_config_t cfg = {
+        .type = JDM_ALLOC_ARENA,
+        .arena = {.capacity = capacity},
+    };
+    jdm_alloc_t* alloc = jdm_alloc_create(cfg);
+    if (!alloc) {
+        fprintf(stderr, "Failed to create arena\n");
+        return EXIT_FAILURE;
+    }
+
+    size_t size = 1024;
+    void* ptr = jdm_alloc(alloc, size);
+    if (!ptr) {
+        fprintf(stderr, "Failed to alloc in arena\n");
+        return EXIT_FAILURE;
+    }
+
+    jdm_alloc_stats_t stats = jdm_alloc_get_stats(alloc);
+    if (stats.type != JDM_ALLOC_ARENA) {
+        fprintf(stderr, "Stats type is not arena\n");
+        return EXIT_FAILURE;
+    }
+    if (stats.arena.arena_used != size) {
+        fprintf(stderr, "Stats used does not match allocated size\n");
+        return EXIT_FAILURE;
+    }
+    if (stats.arena.arena_capacity != capacity) {
+        fprintf(stderr, "Stats capacity does meet expected capacity\n");
+        return EXIT_FAILURE;
+    }
+
+    jdm_alloc_destroy(alloc);
+    return EXIT_SUCCESS;
+}
+
 int main(int argc, char** argv) {
     if (test_arena_allocator() != EXIT_SUCCESS) {
         fprintf(stderr, "Arena allocator test failed\n");
+        return EXIT_FAILURE;
+    }
+    if (test_arena_checkpoint() != EXIT_SUCCESS) {
+        fprintf(stderr, "Arena checkpoint test failed\n");
+        return EXIT_FAILURE;
+    }
+    if (test_arena_stats() != EXIT_SUCCESS) {
+        fprintf(stderr, "Arena stats test failed\n");
         return EXIT_FAILURE;
     }
     printf("Arena allocator test passed\n");
