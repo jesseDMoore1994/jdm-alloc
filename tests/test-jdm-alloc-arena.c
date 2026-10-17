@@ -1,14 +1,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "jdm-alloc.h"
+
 #include "jdm-alloc-arena.h"
+#include "jdm-alloc.h"
 
 static int test_arena_allocator(void) {
-    jdm_alloc_config_t cfg = {
-        .type = JDM_ALLOC_ARENA
-    };
-    jdm_alloc_t *alloc = jdm_alloc_create(cfg);
+    jdm_alloc_config_t cfg = {.type = JDM_ALLOC_ARENA};
+    jdm_alloc_t* alloc = jdm_alloc_create(cfg);
     if (!alloc) {
         fprintf(stderr, "Failed to create arena\n");
         return EXIT_FAILURE;
@@ -17,31 +16,32 @@ static int test_arena_allocator(void) {
     uint8_t* start_base_address = jdm_alloc_arena_get_base_address(alloc);
     size_t start_prev_offset = jdm_alloc_arena_get_previous_offset(alloc);
     size_t start_curr_offset = jdm_alloc_arena_get_current_offset(alloc);
-    fprintf(stderr, "Starting offset after arena allocated: %ld\n", start_curr_offset);
+    fprintf(stderr, "Starting offset after arena allocated: %ld\n",
+            start_curr_offset);
 
     // Allocate a block of memory
     size_t size = 1024;
-    void *ptr = jdm_alloc(alloc, size);
+    void* ptr = jdm_alloc(alloc, size);
     if (!ptr) {
         fprintf(stderr, "Failed to alloc in arena\n");
         return EXIT_FAILURE;
     }
 
     // Zero allocate another block of memory
-    void *ptr2 = jdm_calloc(alloc, 1, size);
+    void* ptr2 = jdm_calloc(alloc, 1, size);
     if (!ptr2) {
         fprintf(stderr, "Failed to calloc in arena\n");
         return EXIT_FAILURE;
     }
-    if (*(char*)ptr2 != '\0' && memcmp(ptr2, ptr2+1, size-1) != 0) {
+    if (*(char*)ptr2 != '\0' && memcmp(ptr2, ptr2 + 1, size - 1) != 0) {
         fprintf(stderr, "calloc did not zero initialize memory\n");
         // print memory in hex
-        const unsigned char *byte = (const unsigned char *)ptr;
+        const unsigned char* byte = (const unsigned char*)ptr;
         size_t alignment = sizeof(void*);
         for (size_t i = 1; i <= size; i++) {
             // %02X prints each byte as a 2-digit uppercase hex value
             fprintf(stderr, "%02X ", byte[i]);
-            if (i%alignment == 0) fprintf(stderr, "\n"); 
+            if (i % alignment == 0) fprintf(stderr, "\n");
         }
         fprintf(stderr, "\n");
         return EXIT_FAILURE;
@@ -110,18 +110,19 @@ static int test_arena_allocator(void) {
 
     // allocate some junk
     jdm_calloc(alloc, 10, size);
-    if(jdm_alloc_arena_get_current_offset(alloc) != (5120 + start_curr_offset + (10 * size))) {
+    if (jdm_alloc_arena_get_current_offset(alloc) !=
+        (5120 + start_curr_offset + (10 * size))) {
         fprintf(stderr, "Junk did not get allocated correctly\n");
         return EXIT_FAILURE;
     }
 
     // restore checkpoint and validate that offsets are restored
     jdm_alloc_arena_restore_checkpoint(alloc, c);
-    if(jdm_alloc_arena_get_current_offset(alloc) != curr_offset) {
+    if (jdm_alloc_arena_get_current_offset(alloc) != curr_offset) {
         fprintf(stderr, "Current offset did not restore\n");
         return EXIT_FAILURE;
     }
-    if(jdm_alloc_arena_get_previous_offset(alloc) != prev_offset) {
+    if (jdm_alloc_arena_get_previous_offset(alloc) != prev_offset) {
         fprintf(stderr, "Previous offset did not restore\n");
         return EXIT_FAILURE;
     }
@@ -130,7 +131,7 @@ static int test_arena_allocator(void) {
     return EXIT_SUCCESS;
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv) {
     if (test_arena_allocator() != EXIT_SUCCESS) {
         fprintf(stderr, "Arena allocator test failed\n");
         return EXIT_FAILURE;

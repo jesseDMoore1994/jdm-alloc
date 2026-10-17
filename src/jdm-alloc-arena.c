@@ -1,17 +1,19 @@
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include "jdm-alloc.h"
-#include "jdm-alloc-internal.h"
 #include "jdm-alloc-arena.h"
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include "jdm-alloc-internal.h"
+#include "jdm-alloc.h"
 
 // internal data structure for arena allocator
 typedef struct {
-    u8* memory; // pointer to the memory block
-    size_t size; // total size of the memory block
-    size_t curr_offset; // current offset in the memory block
-    size_t prev_offset; // previous offset in the memory block
-    size_t alignment; // alignment for allocations
+    u8* memory;          // pointer to the memory block
+    size_t size;         // total size of the memory block
+    size_t curr_offset;  // current offset in the memory block
+    size_t prev_offset;  // previous offset in the memory block
+    size_t alignment;    // alignment for allocations
 } jdm_arena_t;
 
 static void* arena_alloc(jdm_alloc_t* alloc, size_t size) {
@@ -25,7 +27,10 @@ static void* arena_alloc(jdm_alloc_t* alloc, size_t size) {
     jdm_arena_t* arena = (jdm_arena_t*)alloc->internal_data;
     size_t aligned_size = JDM_ALIGN_UP(size, arena->alignment);
     if (arena->curr_offset + aligned_size > arena->size) {
-        fprintf(stderr, "Arena out of memory: requested %zu bytes, but only %zu bytes available\n", aligned_size, arena->size - arena->curr_offset);
+        fprintf(stderr,
+                "Arena out of memory: requested %zu bytes, but only %zu bytes "
+                "available\n",
+                aligned_size, arena->size - arena->curr_offset);
         return NULL;
     }
     void* ptr = arena->memory + arena->curr_offset;
@@ -57,7 +62,9 @@ static void arena_free(jdm_alloc_t* alloc, void* ptr) {
     if (ptr == arena->memory + arena->prev_offset) {
         arena_free_last(alloc);
     } else {
-        fprintf(stderr, "Arena free operation can only free the last allocated block\n");
+        fprintf(
+            stderr,
+            "Arena free operation can only free the last allocated block\n");
     }
 }
 
@@ -74,12 +81,17 @@ static void* arena_realloc(jdm_alloc_t* alloc, void* ptr, size_t size) {
     jdm_arena_t* arena = (jdm_arena_t*)alloc->internal_data;
     // Check if the pointer is the last allocated block
     if (ptr != arena->memory + arena->prev_offset) {
-        fprintf(stderr, "Arena realloc operation can only resize the last allocated block\n");
+        fprintf(stderr,
+                "Arena realloc operation can only resize the last allocated "
+                "block\n");
         return NULL;
     }
     size_t aligned_size = JDM_ALIGN_UP(size, arena->alignment);
     if (arena->prev_offset + aligned_size > arena->size) {
-        fprintf(stderr, "Arena out of memory: requested %zu bytes, but only %zu bytes available\n", aligned_size, arena->size - arena->prev_offset);
+        fprintf(stderr,
+                "Arena out of memory: requested %zu bytes, but only %zu bytes "
+                "available\n",
+                aligned_size, arena->size - arena->prev_offset);
         return NULL;
     }
     arena->curr_offset = arena->prev_offset + aligned_size;
@@ -95,24 +107,32 @@ static void* arena_calloc(jdm_alloc_t* alloc, size_t num, size_t size) {
     return ptr;
 }
 
-static jdm_alloc_funcs_t arena_funcs = {
-    .alloc = arena_alloc,
-    .free = arena_free,
-    .realloc = arena_realloc,
-    .calloc = arena_calloc
-};
+static jdm_alloc_funcs_t arena_funcs = {.alloc = arena_alloc,
+                                        .free = arena_free,
+                                        .realloc = arena_realloc,
+                                        .calloc = arena_calloc};
 
 jdm_alloc_t* jdm_alloc_create_arena(jdm_alloc_config_t cfg) {
-    size_t capacity = cfg.capacity == 0 ? get_default_capacity() : cfg.capacity; 
-    size_t alignment = cfg.alignment == 0 ? get_default_alignment() : cfg.alignment;
+    size_t capacity =
+        cfg.arena.capacity == 0 ? get_default_capacity() : cfg.arena.capacity;
+    size_t alignment = cfg.arena.alignment == 0 ? get_default_alignment()
+                                                : cfg.arena.alignment;
+
+    size_t capacity_plus_structs =
+        capacity + JDM_ALIGN_UP(sizeof(jdm_alloc_t), alignment) +
+        JDM_ALIGN_UP(sizeof(jdm_arena_t), alignment);
+
     jdm_alloc_t* alloc = NULL;
     jdm_arena_t* arena = NULL;
-    u8* memory = (u8*)malloc(capacity);
+    u8* memory = (u8*)malloc(capacity_plus_structs);
     size_t current_offset = 0;
 
     size_t aligned_size = JDM_ALIGN_UP(sizeof(jdm_alloc_t), alignment);
     if (current_offset + aligned_size > capacity) {
-        fprintf(stderr, "Arena out of memory: requested %zu bytes, but only %zu bytes available\n", aligned_size, arena->size - arena->curr_offset);
+        fprintf(stderr,
+                "Arena out of memory: requested %zu bytes, but only %zu bytes "
+                "available\n",
+                aligned_size, arena->size - arena->curr_offset);
         return NULL;
     }
     alloc = (jdm_alloc_t*)(memory + current_offset);
@@ -120,15 +140,18 @@ jdm_alloc_t* jdm_alloc_create_arena(jdm_alloc_config_t cfg) {
 
     aligned_size = JDM_ALIGN_UP(sizeof(jdm_arena_t), alignment);
     if (current_offset + aligned_size > capacity) {
-        fprintf(stderr, "Arena out of memory: requested %zu bytes, but only %zu bytes available\n", aligned_size, arena->size - arena->curr_offset);
+        fprintf(stderr,
+                "Arena out of memory: requested %zu bytes, but only %zu bytes "
+                "available\n",
+                aligned_size, arena->size - arena->curr_offset);
         return NULL;
     }
     arena = (jdm_arena_t*)(memory + current_offset);
     current_offset += aligned_size;
-    
+
     alloc->type = JDM_ALLOC_ARENA;
     JDM_COPY_MEMORY(&alloc->funcs, &arena_funcs, sizeof(jdm_alloc_funcs_t));
-    arena->size = capacity;
+    arena->size = capacity_plus_structs;
     arena->memory = memory;
     arena->curr_offset = current_offset;
     arena->prev_offset = current_offset;
@@ -154,7 +177,9 @@ uint8_t* jdm_alloc_arena_get_base_address(jdm_alloc_t* alloc) {
         return 0;
     }
     if (alloc->type != JDM_ALLOC_ARENA) {
-        fprintf(stderr, "Invalid allocator type for jdm_alloc_arena_get_base_address\n");
+        fprintf(
+            stderr,
+            "Invalid allocator type for jdm_alloc_arena_get_base_address\n");
         return 0;
     }
     jdm_arena_t* arena = (jdm_arena_t*)alloc->internal_data;
@@ -166,7 +191,9 @@ size_t jdm_alloc_arena_get_current_offset(jdm_alloc_t* alloc) {
         return 0;
     }
     if (alloc->type != JDM_ALLOC_ARENA) {
-        fprintf(stderr, "Invalid allocator type for jdm_alloc_arena_get_current_offset\n");
+        fprintf(
+            stderr,
+            "Invalid allocator type for jdm_alloc_arena_get_current_offset\n");
         return 0;
     }
     jdm_arena_t* arena = (jdm_arena_t*)alloc->internal_data;
@@ -178,43 +205,68 @@ size_t jdm_alloc_arena_get_previous_offset(jdm_alloc_t* alloc) {
         return 0;
     }
     if (alloc->type != JDM_ALLOC_ARENA) {
-        fprintf(stderr, "Invalid allocator type for jdm_alloc_arena_get_previous_offset\n");
+        fprintf(
+            stderr,
+            "Invalid allocator type for jdm_alloc_arena_get_previous_offset\n");
         return 0;
     }
     jdm_arena_t* arena = (jdm_arena_t*)alloc->internal_data;
     return arena->prev_offset;
 }
 
-jdm_alloc_arena_checkpoint_t jdm_alloc_arena_create_checkpoint(jdm_alloc_t* alloc) {
+jdm_alloc_arena_checkpoint_t jdm_alloc_arena_create_checkpoint(
+    jdm_alloc_t* alloc) {
     if (!alloc || !alloc->internal_data) {
-        return (jdm_alloc_arena_checkpoint_t) {
+        return (jdm_alloc_arena_checkpoint_t){
             .curr_offset = 0,
             .prev_offset = 0,
         };
     }
     if (alloc->type != JDM_ALLOC_ARENA) {
-        fprintf(stderr, "Invalid allocator type for jdm_alloc_arena_get_previous_offset\n");
-        return (jdm_alloc_arena_checkpoint_t) {
+        fprintf(
+            stderr,
+            "Invalid allocator type for jdm_alloc_arena_get_previous_offset\n");
+        return (jdm_alloc_arena_checkpoint_t){
             .curr_offset = 0,
             .prev_offset = 0,
         };
     }
     jdm_arena_t* arena = (jdm_arena_t*)alloc->internal_data;
-    return (jdm_alloc_arena_checkpoint_t) {
+    return (jdm_alloc_arena_checkpoint_t){
         .curr_offset = arena->curr_offset,
         .prev_offset = arena->prev_offset,
     };
 }
 
-void jdm_alloc_arena_restore_checkpoint(jdm_alloc_t* alloc, jdm_alloc_arena_checkpoint_t checkpoint) {
+void jdm_alloc_arena_restore_checkpoint(
+    jdm_alloc_t* alloc, jdm_alloc_arena_checkpoint_t checkpoint) {
     if (!alloc || !alloc->internal_data) {
         return;
     }
     if (alloc->type != JDM_ALLOC_ARENA) {
-        fprintf(stderr, "Invalid allocator type for jdm_alloc_arena_get_previous_offset\n");
+        fprintf(
+            stderr,
+            "Invalid allocator type for jdm_alloc_arena_get_previous_offset\n");
         return;
     }
     jdm_arena_t* arena = (jdm_arena_t*)alloc->internal_data;
     arena->curr_offset = checkpoint.curr_offset;
     arena->prev_offset = checkpoint.prev_offset;
+}
+
+jdm_alloc_stats_t jdm_alloc_get_stats_arena(jdm_alloc_t* alloc) {
+    jdm_alloc_stats_t stats = {0};
+    if (!alloc || !alloc->internal_data) {
+        return stats;
+    }
+    if (alloc->type != JDM_ALLOC_ARENA) {
+        fprintf(stderr,
+                "Invalid allocator type for jdm_alloc_get_stats_arena\n");
+        return stats;
+    }
+    jdm_arena_t* arena = (jdm_arena_t*)alloc->internal_data;
+    stats.type = JDM_ALLOC_ARENA;
+    stats.arena.arena_capacity = arena->size;
+    stats.arena.arena_used = arena->curr_offset;
+    return stats;
 }

@@ -1,0 +1,4 @@
+# sane default for c code formatting
+BasedOnStyle: Google
+IndentWidth: 4
+ColumnLimit: 80

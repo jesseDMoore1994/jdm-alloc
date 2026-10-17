@@ -1,9 +1,10 @@
 # a nix flake to build the jdm-alloc static c library.
 # this library provides a memory allocator with the following features:
-# - fast allocation and deallocation
-# - low memory overhead
-# - thread-safe
-# - supports multiple allocation strategies (e.g. first-fit, best-fit, etc.)
+# - arena
+# - stack
+# - pool
+# - free list
+# - custom
 
 {
   description = "A flake to build the jdm-alloc static c library";
@@ -24,7 +25,7 @@
       buildInputs = [ pkgs.cmake ];
 
       meta = with pkgs.lib; {
-        description = "A fast and efficient memory allocator library";
+        description = "Hand-rolled memory allocator library for C";
         license = licenses.mit;
         maintainers = with pkgs.maintainers; [ jesseDMoore1994 ];
       };
@@ -39,7 +40,7 @@
       buildInputs = [ cmake ];
 
       meta = with lib; {
-        description = "A fast and efficient memory allocator library";
+        description = "Hand-rolled memory allocator library for C";
         license = licenses.mit;
         maintainers = with maintainers; [ jesseDMoore1994 ];
       };
@@ -49,7 +50,7 @@
 
     # setup a devShell for development
     devShells.x86_64-linux.default = with nixpkgs.legacyPackages.x86_64-linux; mkShell {
-      buildInputs = [ cmake gcc gdb valgrind];
+      buildInputs = [ clang-tools cmake gcc gdb valgrind];
       shellHook = ''
         echo "Welcome to the jdm-alloc development shell!"
       '';
