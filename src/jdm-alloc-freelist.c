@@ -1,3 +1,4 @@
+#include <jdm-log.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -107,7 +108,7 @@ static void* freelist_alloc(jdm_alloc_t* alloc, size_t size) {
         return NULL;
     }
     if (alloc->type != JDM_ALLOC_FREELIST) {
-        fprintf(stderr, "Invalid allocator type for freelist_alloc\n");
+        JDM_LOG_ERROR("Invalid allocator type for freelist_alloc");
         return NULL;
     }
 
@@ -115,10 +116,10 @@ static void* freelist_alloc(jdm_alloc_t* alloc, size_t size) {
     jdm_freelist_node_t* node =
         jdm_freelist_find_fit(freelist, size, freelist->alignment);
     if (!node) {
-        fprintf(stderr,
-                "Freelist allocator out of memory: requested %zu bytes, but "
-                "only %zu bytes available\n",
-                size, freelist->size - freelist->used);
+        JDM_LOG_ERROR(
+            "Freelist allocator out of memory: requested %zu bytes, but "
+            "only %zu bytes available",
+            size, freelist->size - freelist->used);
         return NULL;
     }
 
@@ -201,7 +202,7 @@ static void freelist_free(jdm_alloc_t* alloc, void* ptr) {
         return;
     }
     if (alloc->type != JDM_ALLOC_FREELIST) {
-        fprintf(stderr, "Invalid allocator type for freelist_free\n");
+        JDM_LOG_ERROR("Invalid allocator type for freelist_free");
         return;
     }
 
@@ -240,7 +241,7 @@ static void* freelist_realloc(jdm_alloc_t* alloc, void* ptr, size_t size) {
         return NULL;
     }
     if (alloc->type != JDM_ALLOC_FREELIST) {
-        fprintf(stderr, "Invalid allocator type for freelist_realloc\n");
+        JDM_LOG_ERROR("Invalid allocator type for freelist_realloc");
         return NULL;
     }
 
@@ -297,17 +298,17 @@ jdm_alloc_t* jdm_alloc_create_freelist(jdm_alloc_config_t cfg) {
     jdm_freelist_t* freelist = NULL;
     u8* memory = (u8*)malloc(capacity_plus_structs);
     if (!memory) {
-        fprintf(stderr, "Failed to allocate memory for freelist allocator\n");
+        JDM_LOG_ERROR("Failed to allocate memory for freelist allocator");
         return NULL;
     }
 
     size_t current_offset = 0;
     size_t aligned_size = JDM_ALIGN_UP(sizeof(jdm_alloc_t), alignment);
     if (current_offset + aligned_size > capacity) {
-        fprintf(stderr,
-                "Freelist allocator out of memory: requested %zu bytes, but "
-                "only %zu bytes available\n",
-                current_offset + aligned_size, capacity);
+        JDM_LOG_ERROR(
+            "Freelist allocator out of memory: requested %zu bytes, but "
+            "only %zu bytes available",
+            current_offset + aligned_size, capacity);
         free(memory);
         return NULL;
     }
@@ -317,10 +318,10 @@ jdm_alloc_t* jdm_alloc_create_freelist(jdm_alloc_config_t cfg) {
 
     aligned_size = JDM_ALIGN_UP(sizeof(jdm_freelist_t), alignment);
     if (current_offset + aligned_size > capacity) {
-        fprintf(stderr,
-                "Freelist allocator out of memory: requested %zu bytes, but "
-                "only %zu bytes available\n",
-                current_offset + aligned_size, capacity);
+        JDM_LOG_ERROR(
+            "Freelist allocator out of memory: requested %zu bytes, but "
+            "only %zu bytes available",
+            current_offset + aligned_size, capacity);
         free(memory);
         return NULL;
     }
@@ -360,8 +361,8 @@ jdm_alloc_stats_t jdm_alloc_get_stats_freelist(jdm_alloc_t* alloc) {
         return stats;
     }
     if (alloc->type != JDM_ALLOC_FREELIST) {
-        fprintf(stderr,
-                "Invalid allocator type for jdm_alloc_get_stats_freelist\n");
+        JDM_LOG_ERROR(
+            "Invalid allocator type for jdm_alloc_get_stats_freelist");
         return stats;
     }
     jdm_freelist_t* freelist = (jdm_freelist_t*)alloc->internal_data;

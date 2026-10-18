@@ -1,3 +1,4 @@
+#include <jdm-log.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -20,7 +21,7 @@ typedef struct {
 
 void* jdm_alloc_pool_alloc(jdm_alloc_t* alloc) {
     if (alloc->type != JDM_ALLOC_POOL) {
-        fprintf(stderr, "Invalid allocator type for jdm_alloc_pool_alloc\n");
+        JDM_LOG_ERROR("Invalid allocator type for jdm_alloc_pool_alloc");
         return NULL;
     }
     if (!alloc || !alloc->internal_data) {
@@ -28,7 +29,7 @@ void* jdm_alloc_pool_alloc(jdm_alloc_t* alloc) {
     }
     jdm_pool_t* pool = (jdm_pool_t*)alloc->internal_data;
     if (!pool->head) {
-        fprintf(stderr, "Pool out of memory\n");
+        JDM_LOG_ERROR("Pool out of memory");
         return NULL;
     }
     jdm_pool_free_node_t* node = pool->head;
@@ -42,10 +43,10 @@ static void* pool_alloc(jdm_alloc_t* alloc, size_t size) {
     }
     jdm_pool_t* pool = (jdm_pool_t*)alloc->internal_data;
     if (size != pool->chunk_size) {
-        fprintf(stderr,
-                "Pool allocator can only allocate fixed-size chunks of size "
-                "%zu, requested size %zu\n",
-                pool->chunk_size, size);
+        JDM_LOG_ERROR(
+            "Pool allocator can only allocate fixed-size chunks of size "
+            "%zu, requested size %zu",
+            pool->chunk_size, size);
         return NULL;
     }
     return jdm_alloc_pool_alloc(alloc);
@@ -56,7 +57,7 @@ static void pool_free(jdm_alloc_t* alloc, void* ptr) {
         return;
     }
     if (alloc->type != JDM_ALLOC_POOL) {
-        fprintf(stderr, "Invalid allocator type for jdm_alloc_pool_free\n");
+        JDM_LOG_ERROR("Invalid allocator type for jdm_alloc_pool_free");
         return;
     }
     jdm_pool_t* pool = (jdm_pool_t*)alloc->internal_data;
@@ -69,9 +70,8 @@ static void* pool_realloc(jdm_alloc_t* alloc, void* ptr, size_t size) {
     UNUSED(alloc);
     UNUSED(ptr);
     UNUSED(size);
-    fprintf(
-        stderr,
-        "Cannot realloc memory in pool allocator (fixed-size chunks only).\n");
+    JDM_LOG_ERROR(
+        "Cannot realloc memory in pool allocator (fixed-size chunks only).");
     return NULL;
 }
 
@@ -85,17 +85,17 @@ void* jdm_alloc_pool_calloc(jdm_alloc_t* alloc) {
 
 static void* pool_calloc(jdm_alloc_t* alloc, size_t num, size_t size) {
     if (num != 1) {
-        fprintf(stderr,
-                "Pool allocator can only allocate one chunk at a time, "
-                "requested %zu chunks\n",
-                num);
+        JDM_LOG_ERROR(
+            "Pool allocator can only allocate one chunk at a time, "
+            "requested %zu chunks",
+            num);
         return NULL;
     }
     if (size != ((jdm_pool_t*)alloc->internal_data)->chunk_size) {
-        fprintf(stderr,
-                "Pool allocator can only allocate fixed-size chunks of size "
-                "%zu, requested size %zu\n",
-                ((jdm_pool_t*)alloc->internal_data)->chunk_size, size);
+        JDM_LOG_ERROR(
+            "Pool allocator can only allocate fixed-size chunks of size "
+            "%zu, requested size %zu",
+            ((jdm_pool_t*)alloc->internal_data)->chunk_size, size);
         return NULL;
     }
     return jdm_alloc_pool_calloc(alloc);
@@ -111,7 +111,7 @@ void jdm_alloc_pool_free_all(jdm_alloc_t* alloc) {
         return;
     }
     if (alloc->type != JDM_ALLOC_POOL) {
-        fprintf(stderr, "Invalid allocator type for jdm_alloc_pool_free_all\n");
+        JDM_LOG_ERROR("Invalid allocator type for jdm_alloc_pool_free_all");
         return;
     }
     jdm_pool_t* pool = (jdm_pool_t*)alloc->internal_data;
@@ -136,9 +136,9 @@ jdm_alloc_t* jdm_alloc_create_pool(const jdm_alloc_config_t cfg) {
         cfg.pool.alignment == 0 ? get_default_alignment() : cfg.pool.alignment;
     size_t chunk_size = cfg.pool.chunk_size == 0 ? get_default_chunk_size()
                                                  : cfg.pool.chunk_size;
-    printf(
+    JDM_LOG_DEBUG(
         "Creating pool allocator with capacity %zu, alignment %zu, chunk size "
-        "%zu\n",
+        "%zu",
         capacity, alignment, chunk_size);
 
     // this allocator is designed to allocate fixed-size chunks, but since
@@ -156,19 +156,18 @@ jdm_alloc_t* jdm_alloc_create_pool(const jdm_alloc_config_t cfg) {
     // pool.
 
     if (chunk_size < sizeof(jdm_pool_free_node_t)) {
-        fprintf(
-            stderr,
-            "Pool chunk size must be at least %zu bytes to hold a free node\n",
+        JDM_LOG_ERROR(
+            "Pool chunk size must be at least %zu bytes to hold a free node",
             sizeof(jdm_pool_free_node_t));
         return NULL;
     }
     if (capacity < (chunk_size + JDM_ALIGN_UP(sizeof(jdm_alloc_t), alignment) +
                     JDM_ALIGN_UP(sizeof(jdm_pool_t), alignment))) {
-        fprintf(stderr,
-                "Pool capacity must be at least %zu bytes to hold the "
-                "allocator, pool, and at least one chunk\n",
-                chunk_size + JDM_ALIGN_UP(sizeof(jdm_alloc_t), alignment) +
-                    JDM_ALIGN_UP(sizeof(jdm_pool_t), alignment));
+        JDM_LOG_ERROR(
+            "Pool capacity must be at least %zu bytes to hold the "
+            "allocator, pool, and at least one chunk",
+            chunk_size + JDM_ALIGN_UP(sizeof(jdm_alloc_t), alignment) +
+                JDM_ALIGN_UP(sizeof(jdm_pool_t), alignment));
         return NULL;
     }
 
@@ -185,10 +184,10 @@ jdm_alloc_t* jdm_alloc_create_pool(const jdm_alloc_config_t cfg) {
 
     size_t aligned_size = JDM_ALIGN_UP(sizeof(jdm_alloc_t), alignment);
     if (current_offset + aligned_size > capacity_plus_structs) {
-        fprintf(stderr,
-                "Pool out of memory: requested %zu bytes, but only %zu bytes "
-                "available\n",
-                current_offset + aligned_size, capacity_plus_structs);
+        JDM_LOG_ERROR(
+            "Pool out of memory: requested %zu bytes, but only %zu bytes "
+            "available",
+            current_offset + aligned_size, capacity_plus_structs);
         return NULL;
     }
     alloc = (jdm_alloc_t*)(memory + current_offset);
@@ -196,10 +195,10 @@ jdm_alloc_t* jdm_alloc_create_pool(const jdm_alloc_config_t cfg) {
 
     aligned_size = JDM_ALIGN_UP(sizeof(jdm_pool_t), alignment);
     if (current_offset + aligned_size > capacity_plus_structs) {
-        fprintf(stderr,
-                "Pool out of memory: requested %zu bytes, but only %zu bytes "
-                "available\n",
-                current_offset + aligned_size, capacity_plus_structs);
+        JDM_LOG_ERROR(
+            "Pool out of memory: requested %zu bytes, but only %zu bytes "
+            "available",
+            current_offset + aligned_size, capacity_plus_structs);
         return NULL;
     }
     pool = (jdm_pool_t*)(memory + current_offset);
@@ -237,8 +236,7 @@ jdm_alloc_stats_t jdm_alloc_get_stats_pool(jdm_alloc_t* alloc) {
         return stats;
     }
     if (alloc->type != JDM_ALLOC_POOL) {
-        fprintf(stderr,
-                "Invalid allocator type for jdm_alloc_get_stats_pool\n");
+        JDM_LOG_ERROR("Invalid allocator type for jdm_alloc_get_stats_pool");
         return stats;
     }
     jdm_pool_t* pool = (jdm_pool_t*)alloc->internal_data;

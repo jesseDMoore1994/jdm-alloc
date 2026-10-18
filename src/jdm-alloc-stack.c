@@ -1,3 +1,4 @@
+#include <jdm-log.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -60,7 +61,7 @@ static void* stack_alloc(jdm_alloc_t* alloc, size_t size) {
         return NULL;
     }
     if (alloc->type != JDM_ALLOC_STACK) {
-        fprintf(stderr, "Invalid allocator type for stack_alloc\n");
+        JDM_LOG_ERROR("Invalid allocator type for stack_alloc");
         return NULL;
     }
 
@@ -74,8 +75,8 @@ static void* stack_alloc(jdm_alloc_t* alloc, size_t size) {
         stack->alignment = 128;
     }
 
-    fprintf(stderr, "stack_alloc initial: size=%zu, offset=%zu, capacity=%zu\n", size,
-            stack->offset, stack->size);
+    JDM_LOG_ERROR("stack_alloc initial: size=%zu, offset=%zu, capacity=%zu",
+                  size, stack->offset, stack->size);
 
     curr_addr = (uintptr_t)stack->memory + (uintptr_t)stack->offset;
     padding = calc_padding_with_header(curr_addr, (uintptr_t)stack->alignment,
@@ -86,8 +87,9 @@ static void* stack_alloc(jdm_alloc_t* alloc, size_t size) {
     }
     stack->offset += padding;
 
-    fprintf(stderr, "stack_alloc after padding: size=%zu, offset=%zu, capacity=%zu\n", size,
-            stack->offset, stack->size);
+    JDM_LOG_ERROR(
+        "stack_alloc after padding: size=%zu, offset=%zu, capacity=%zu", size,
+        stack->offset, stack->size);
 
     next_addr = curr_addr + (uintptr_t)padding;
     header = (jdm_stack_header_t*)(next_addr - sizeof(jdm_stack_header_t));
@@ -96,8 +98,8 @@ static void* stack_alloc(jdm_alloc_t* alloc, size_t size) {
 
     stack->offset += size;
 
-    fprintf(stderr, "stack_alloc finalize: size=%zu, offset=%zu, capacity=%zu\n", size,
-            stack->offset, stack->size);
+    JDM_LOG_ERROR("stack_alloc finalize: size=%zu, offset=%zu, capacity=%zu",
+                  size, stack->offset, stack->size);
 
     return memset((void*)next_addr, 0, size);
 }
@@ -118,13 +120,13 @@ static void stack_free(jdm_alloc_t* alloc, void* ptr) {
             return;
         }
         if (alloc->type != JDM_ALLOC_STACK) {
-            fprintf(stderr, "Invalid allocator type for stack_alloc\n");
+            JDM_LOG_ERROR("Invalid allocator type for stack_alloc");
             return;
         }
         if (!(start <= curr_addr && curr_addr < end)) {
-            fprintf(stderr,
-                    "Out of bounds memory address passed to stack allocator "
-                    "(free)\n");
+            JDM_LOG_ERROR(
+                "Out of bounds memory address passed to stack allocator "
+                "(free)");
             return;
         }
 
@@ -213,10 +215,10 @@ jdm_alloc_t* jdm_alloc_create_stack(jdm_alloc_config_t cfg) {
 
     size_t aligned_size = JDM_ALIGN_UP(sizeof(jdm_alloc_t), alignment);
     if (offset + aligned_size > capacity) {
-        fprintf(stderr,
-                "Stack out of memory: requested %zu bytes, but only %zu bytes "
-                "available\n",
-                aligned_size, stack->size - stack->offset);
+        JDM_LOG_ERROR(
+            "Stack out of memory: requested %zu bytes, but only %zu bytes "
+            "available",
+            aligned_size, stack->size - stack->offset);
         return NULL;
     }
     alloc = (jdm_alloc_t*)(memory + offset);
@@ -224,10 +226,10 @@ jdm_alloc_t* jdm_alloc_create_stack(jdm_alloc_config_t cfg) {
 
     aligned_size = JDM_ALIGN_UP(sizeof(jdm_stack_t), alignment);
     if (offset + aligned_size > capacity) {
-        fprintf(stderr,
-                "Stack out of memory: requested %zu bytes, but only %zu bytes "
-                "available\n",
-                aligned_size, stack->size - stack->offset);
+        JDM_LOG_ERROR(
+            "Stack out of memory: requested %zu bytes, but only %zu bytes "
+            "available",
+            aligned_size, stack->size - stack->offset);
         return NULL;
     }
     stack = (jdm_stack_t*)(memory + offset);
@@ -262,8 +264,7 @@ jdm_alloc_stats_t jdm_alloc_get_stats_stack(jdm_alloc_t* alloc) {
         return stats;
     }
     if (alloc->type != JDM_ALLOC_STACK) {
-        fprintf(stderr,
-                "Invalid allocator type for jdm_alloc_get_stats_stack\n");
+        JDM_LOG_ERROR("Invalid allocator type for jdm_alloc_get_stats_stack");
         return stats;
     }
     jdm_stack_t* stack = (jdm_stack_t*)alloc->internal_data;

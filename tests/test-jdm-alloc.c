@@ -1,3 +1,4 @@
+#include <jdm-log.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -34,7 +35,7 @@ static int test_custom_allocator(void) {
         .custom = {.funcs = &custom_funcs, .user_data = NULL}};
     jdm_alloc_t* alloc = jdm_alloc_create(cfg);
     if (!alloc) {
-        fprintf(stderr, "Failed to create custom jdm_alloc\n");
+        JDM_LOG_ERROR("Failed to create custom jdm_alloc");
         return EXIT_FAILURE;
     }
 
@@ -42,7 +43,7 @@ static int test_custom_allocator(void) {
     size_t size = 1024;
     void* ptr = jdm_alloc(alloc, size);
     if (!ptr) {
-        fprintf(stderr, "Failed to allocate memory\n");
+        JDM_LOG_ERROR("Failed to allocate memory using custom jdm_alloc");
         jdm_alloc_destroy(alloc);
         return EXIT_FAILURE;
     }
@@ -59,10 +60,13 @@ static int test_custom_allocator(void) {
 }
 
 int main(int argc, char** argv) {
+    jdm_log_init();
+    jdm_log_enable_thread_id(JDM_LOG_DISABLE_THREAD_ID);
     if (test_custom_allocator() != EXIT_SUCCESS) {
-        fprintf(stderr, "Custom allocator test failed\n");
+        JDM_LOG_ERROR("Custom allocator test failed");
         return EXIT_FAILURE;
     }
-    printf("Custom allocator test passed\n");
+    JDM_LOG_INFO("Custom allocator test passed");
+    jdm_log_cleanup();
     return EXIT_SUCCESS;
 }

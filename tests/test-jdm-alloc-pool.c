@@ -1,3 +1,4 @@
+#include <jdm-log.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -17,7 +18,7 @@ static int test_pool_allocator(void) {
 
     jdm_alloc_t* alloc = jdm_alloc_create(cfg);
     if (!alloc) {
-        fprintf(stderr, "Failed to create pool\n");
+        JDM_LOG_ERROR("Failed to create pool allocator");
         return EXIT_FAILURE;
     }
 
@@ -25,7 +26,7 @@ static int test_pool_allocator(void) {
     for (size_t i = 0; i < num_chunks; i++) {
         chunks[i] = jdm_alloc(alloc, chunk_size);
         if (!chunks[i]) {
-            fprintf(stderr, "Failed to allocate chunk %zu\n", i);
+            JDM_LOG_ERROR("Failed to allocate chunk %zu", i);
             jdm_alloc_destroy(alloc);
             return EXIT_FAILURE;
         }
@@ -53,29 +54,29 @@ static int test_pool_allocator_stats(void) {
 
     jdm_alloc_t* alloc = jdm_alloc_create(cfg);
     if (!alloc) {
-        fprintf(stderr, "Failed to create pool\n");
+        JDM_LOG_ERROR("Failed to create pool allocator");
         return EXIT_FAILURE;
     }
 
     jdm_alloc_stats_t stats_before = jdm_alloc_get_stats(alloc);
     if (stats_before.pool.chunk_used != 0) {
-        fprintf(stderr, "Expected 0 chunks used before allocation, got %zu\n",
-                stats_before.pool.chunk_used);
+        JDM_LOG_ERROR("Expected 0 chunks used before allocation, got %zu",
+                      stats_before.pool.chunk_used);
         jdm_alloc_destroy(alloc);
         return EXIT_FAILURE;
     }
 
     void* chunk = jdm_alloc(alloc, chunk_size);
     if (!chunk) {
-        fprintf(stderr, "Failed to allocate chunk\n");
+        JDM_LOG_ERROR("Failed to allocate chunk");
         jdm_alloc_destroy(alloc);
         return EXIT_FAILURE;
     }
 
     jdm_alloc_stats_t stats_after = jdm_alloc_get_stats(alloc);
     if (stats_after.pool.chunk_used != 1) {
-        fprintf(stderr, "Expected 1 chunk used after allocation, got %zu\n",
-                stats_after.pool.chunk_used);
+        JDM_LOG_ERROR("Expected 1 chunk used after allocation, got %zu",
+                      stats_after.pool.chunk_used);
         jdm_free(alloc, chunk);
         jdm_alloc_destroy(alloc);
         return EXIT_FAILURE;
@@ -87,10 +88,17 @@ static int test_pool_allocator_stats(void) {
 }
 
 int main(int argc, char** argv) {
+    jdm_log_init();
+    jdm_log_enable_thread_id(JDM_LOG_DISABLE_THREAD_ID);
     if (test_pool_allocator() != EXIT_SUCCESS) {
-        fprintf(stderr, "Pool allocator test failed\n");
+        JDM_LOG_ERROR("Pool allocator test failed");
         return EXIT_FAILURE;
     }
-    printf("Pool allocator test passed\n");
+    if (test_pool_allocator_stats() != EXIT_SUCCESS) {
+        JDM_LOG_ERROR("Pool allocator stats test failed");
+        return EXIT_FAILURE;
+    }
+    JDM_LOG_INFO("Pool allocator tests passed");
+    jdm_log_cleanup();
     return EXIT_SUCCESS;
 }

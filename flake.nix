@@ -11,18 +11,24 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    jdm-log.url = "github:jesseDMoore1994/jdm-log";
   };
 
-  outputs = { self, nixpkgs }: let
+  outputs = { 
+    self,
+    nixpkgs,
+    jdm-log
+  }: let
     system = "x86_64-linux";
     pkgs = import nixpkgs { inherit system; };
+    jdm-log-lib = jdm-log.packages.${system}.jdm-log;
     jdm-alloc = pkgs.stdenv.mkDerivation {
       pname = "jdm-alloc";
       version = "1.0.0";
 
       src = ./.;
 
-      buildInputs = [ pkgs.cmake ];
+      buildInputs = [ pkgs.cmake jdm-log-lib ];
 
       meta = with pkgs.lib; {
         description = "Hand-rolled memory allocator library for C";
@@ -50,7 +56,7 @@
 
     # setup a devShell for development
     devShells.x86_64-linux.default = with nixpkgs.legacyPackages.x86_64-linux; mkShell {
-      buildInputs = [ clang-tools cmake gcc gdb valgrind];
+      buildInputs = [ clang-tools cmake gcc gdb valgrind jdm-log-lib ];
       shellHook = ''
         echo "Welcome to the jdm-alloc development shell!"
       '';

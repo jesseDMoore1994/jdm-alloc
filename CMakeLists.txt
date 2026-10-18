@@ -6,6 +6,8 @@ project(jdm-alloc VERSION 1.0 LANGUAGES C)
 # Set the C standard to C11
 set(CMAKE_C_STANDARD 11)
 
+set(CMAKE_REQUIRED_LIBRARIES jdm-log)
+
 # Add the source files for the jdm-alloc library
 set(SOURCES
     src/jdm-alloc-internal.h
@@ -23,25 +25,28 @@ add_library(jdm-alloc STATIC ${SOURCES})
 # Include the header files for the jdm-alloc library
 target_include_directories(jdm-alloc PUBLIC include)
 
+# Link the jdm-log library to the jdm-alloc library
+target_link_libraries(jdm-alloc PRIVATE jdm-log)
+
 # Add the test executables
 add_executable(test-jdm-alloc tests/test-jdm-alloc.c)
-target_link_libraries(test-jdm-alloc PRIVATE jdm-alloc)
+target_link_libraries(test-jdm-alloc PRIVATE jdm-alloc jdm-log)
 add_test(NAME test-jdm-alloc COMMAND test-jdm-alloc)
 
 add_executable(test-jdm-alloc-arena tests/test-jdm-alloc-arena.c)
-target_link_libraries(test-jdm-alloc-arena PRIVATE jdm-alloc)
+target_link_libraries(test-jdm-alloc-arena PRIVATE jdm-alloc jdm-log)
 add_test(NAME test-jdm-alloc-arena COMMAND test-jdm-alloc-arena)
 
 add_executable(test-jdm-alloc-stack tests/test-jdm-alloc-stack.c)
-target_link_libraries(test-jdm-alloc-stack PRIVATE jdm-alloc)
+target_link_libraries(test-jdm-alloc-stack PRIVATE jdm-alloc jdm-log)
 add_test(NAME test-jdm-alloc-stack COMMAND test-jdm-alloc-stack)
 
 add_executable(test-jdm-alloc-pool tests/test-jdm-alloc-pool.c)
-target_link_libraries(test-jdm-alloc-pool PRIVATE jdm-alloc)
+target_link_libraries(test-jdm-alloc-pool PRIVATE jdm-alloc jdm-log)
 add_test(NAME test-jdm-alloc-pool COMMAND test-jdm-alloc-pool)
 
 add_executable(test-jdm-alloc-freelist tests/test-jdm-alloc-freelist.c)
-target_link_libraries(test-jdm-alloc-freelist PRIVATE jdm-alloc)
+target_link_libraries(test-jdm-alloc-freelist PRIVATE jdm-alloc jdm-log)
 add_test(NAME test-jdm-alloc-freelist COMMAND test-jdm-alloc-freelist)
 
 # Enable testing

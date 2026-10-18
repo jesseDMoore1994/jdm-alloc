@@ -1,6 +1,40 @@
 {
   "nodes": {
+    "jdm-log": {
+      "inputs": {
+        "nixpkgs": "nixpkgs"
+      },
+      "locked": {
+        "lastModified": 1792273526,
+        "narHash": "sha256-VaH1f0D8Bhh+X3M7TTi4aYRMontOPHSs4IUgRMYWG3k=",
+        "owner": "jesseDMoore1994",
+        "repo": "jdm-log",
+        "rev": "d2dbdbf7df30a29f4a0248cca36dd846ae22575a",
+        "type": "github"
+      },
+      "original": {
+        "owner": "jesseDMoore1994",
+        "repo": "jdm-log",
+        "type": "github"
+      }
+    },
     "nixpkgs": {
+      "locked": {
+        "lastModified": 1791956154,
+        "narHash": "sha256-jBYGPi4udQ9uo4KQp9m2J0546nJVQitG15gvZSaVVAs=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "55bfb4d7437bd4e09ab7cba58a43bd68eb310044",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "ref": "nixos-unstable",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "nixpkgs_2": {
       "locked": {
         "lastModified": 1784796856,
         "narHash": "sha256-wWFrV5/Qbm+lyt5x20E/bSbfJiGKMo4RCxZV8cl/WZI=",
@@ -18,7 +52,8 @@
     },
     "root": {
       "inputs": {
-        "nixpkgs": "nixpkgs"
+        "jdm-log": "jdm-log",
+        "nixpkgs": "nixpkgs_2"
       }
     }
   },
