@@ -43,7 +43,7 @@
 
       src = ./.;
 
-      buildInputs = [ cmake ];
+      buildInputs = [ cmake jdm-log-lib ];
 
       meta = with lib; {
         description = "Hand-rolled memory allocator library for C";

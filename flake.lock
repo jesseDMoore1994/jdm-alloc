@@ -5,11 +5,11 @@
         "nixpkgs": "nixpkgs"
       },
       "locked": {
-        "lastModified": 1792273526,
-        "narHash": "sha256-VaH1f0D8Bhh+X3M7TTi4aYRMontOPHSs4IUgRMYWG3k=",
+        "lastModified": 1792369968,
+        "narHash": "sha256-SJm6qaq5bdGKwOMtJn1DkG2Om1T4BFMGKvROaLw0WtI=",
         "owner": "jesseDMoore1994",
         "repo": "jdm-log",
-        "rev": "d2dbdbf7df30a29f4a0248cca36dd846ae22575a",
+        "rev": "3c7626f75fd1b994733769d89087b340903a1cc9",
         "type": "github"
       },
       "original": {
@@ -36,11 +36,11 @@
     },
     "nixpkgs_2": {
       "locked": {
-        "lastModified": 1784796856,
-        "narHash": "sha256-wWFrV5/Qbm+lyt5x20E/bSbfJiGKMo4RCxZV8cl/WZI=",
+        "lastModified": 1792094642,
+        "narHash": "sha256-zp8ToDMnqZcu4o4IH9pdwXFXGp7yLm/M0dEnNWnyd7I=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "e2587caef70cea85dd97d7daab492899902dbf5d",
+        "rev": "fe13242281a67641c0102cdb1087f0ebe586c7df",
         "type": "github"
       },
       "original": {

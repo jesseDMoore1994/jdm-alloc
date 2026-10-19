@@ -147,5 +147,6 @@ install(TARGETS
     test-jdm-alloc-stack
     test-jdm-alloc-pool
     test-jdm-alloc-freelist
+    test-jdm-alloc-threaded
     RUNTIME DESTINATION bin
 )
