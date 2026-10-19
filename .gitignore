@@ -2,3 +2,6 @@
 .envrc
 result
 build
+asan
+tsan
+ubsan

@@ -108,10 +108,27 @@ static void* arena_calloc(jdm_alloc_t* alloc, size_t num, size_t size) {
     return ptr;
 }
 
+static jdm_alloc_stats_t arena_get_stats(jdm_alloc_t* alloc) {
+    jdm_alloc_stats_t stats = {0};
+    if (!alloc || !alloc->internal_data) {
+        return stats;
+    }
+    if (alloc->type != JDM_ALLOC_ARENA) {
+        JDM_LOG_ERROR("Invalid allocator type for jdm_alloc_get_stats_arena");
+        return stats;
+    }
+    jdm_arena_t* arena = (jdm_arena_t*)alloc->internal_data;
+    stats.type = JDM_ALLOC_ARENA;
+    stats.arena.arena_capacity = arena->size - arena->start;
+    stats.arena.arena_used = arena->curr_offset - arena->start;
+    return stats;
+}
+
 static jdm_alloc_funcs_t arena_funcs = {.alloc = arena_alloc,
                                         .free = arena_free,
                                         .realloc = arena_realloc,
-                                        .calloc = arena_calloc};
+                                        .calloc = arena_calloc,
+                                        .get_stats = arena_get_stats};
 
 jdm_alloc_t* jdm_alloc_create_arena(jdm_alloc_config_t cfg) {
     size_t capacity =
@@ -249,20 +266,4 @@ void jdm_alloc_arena_restore_checkpoint(
     jdm_arena_t* arena = (jdm_arena_t*)alloc->internal_data;
     arena->curr_offset = checkpoint.curr_offset;
     arena->prev_offset = checkpoint.prev_offset;
-}
-
-jdm_alloc_stats_t jdm_alloc_get_stats_arena(jdm_alloc_t* alloc) {
-    jdm_alloc_stats_t stats = {0};
-    if (!alloc || !alloc->internal_data) {
-        return stats;
-    }
-    if (alloc->type != JDM_ALLOC_ARENA) {
-        JDM_LOG_ERROR("Invalid allocator type for jdm_alloc_get_stats_arena");
-        return stats;
-    }
-    jdm_arena_t* arena = (jdm_arena_t*)alloc->internal_data;
-    stats.type = JDM_ALLOC_ARENA;
-    stats.arena.arena_capacity = arena->size - arena->start;
-    stats.arena.arena_used = arena->curr_offset - arena->start;
-    return stats;
 }

@@ -279,10 +279,28 @@ static void* freelist_calloc(jdm_alloc_t* alloc, size_t num, size_t size) {
     return ptr;
 }
 
+static jdm_alloc_stats_t freelist_get_stats(jdm_alloc_t* alloc) {
+    jdm_alloc_stats_t stats = {0};
+    if (!alloc || !alloc->internal_data) {
+        return stats;
+    }
+    if (alloc->type != JDM_ALLOC_FREELIST) {
+        JDM_LOG_ERROR(
+            "Invalid allocator type for jdm_alloc_get_stats_freelist");
+        return stats;
+    }
+    jdm_freelist_t* freelist = (jdm_freelist_t*)alloc->internal_data;
+    stats.type = JDM_ALLOC_FREELIST;
+    stats.freelist.freelist_capacity = freelist->size;
+    stats.freelist.freelist_used = freelist->used;
+    return stats;
+}
+
 static jdm_alloc_funcs_t freelist_funcs = {.alloc = freelist_alloc,
                                            .free = freelist_free,
                                            .realloc = freelist_realloc,
-                                           .calloc = freelist_calloc};
+                                           .calloc = freelist_calloc,
+                                           .get_stats = freelist_get_stats};
 
 jdm_alloc_t* jdm_alloc_create_freelist(jdm_alloc_config_t cfg) {
     size_t capacity = cfg.freelist.capacity == 0 ? get_default_capacity()
@@ -353,21 +371,4 @@ void jdm_alloc_destroy_freelist(jdm_alloc_t* alloc) {
             free(freelist->memory);
         }
     }
-}
-
-jdm_alloc_stats_t jdm_alloc_get_stats_freelist(jdm_alloc_t* alloc) {
-    jdm_alloc_stats_t stats = {0};
-    if (!alloc || !alloc->internal_data) {
-        return stats;
-    }
-    if (alloc->type != JDM_ALLOC_FREELIST) {
-        JDM_LOG_ERROR(
-            "Invalid allocator type for jdm_alloc_get_stats_freelist");
-        return stats;
-    }
-    jdm_freelist_t* freelist = (jdm_freelist_t*)alloc->internal_data;
-    stats.type = JDM_ALLOC_FREELIST;
-    stats.freelist.freelist_capacity = freelist->size;
-    stats.freelist.freelist_used = freelist->used;
-    return stats;
 }

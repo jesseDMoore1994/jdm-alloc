@@ -16,7 +16,7 @@ jdm_alloc_t* jdm_alloc_create_custom(jdm_alloc_config_t cfg) {
     alloc->type = JDM_ALLOC_CUSTOM;
     JDM_COPY_MEMORY(&alloc->funcs, cfg.custom.funcs, sizeof(jdm_alloc_funcs_t));
     alloc->internal_data =
-        cfg.custom.user_data;  // store user-defined data for the allocator
+        cfg.custom.user_data;  // store user-defined data for the allocator internally
     return alloc;
 }
 
@@ -27,7 +27,6 @@ void jdm_alloc_destroy_custom(jdm_alloc_t* alloc) {
     free(alloc);
 }
 
-jdm_alloc_stats_t jdm_alloc_get_stats_custom(jdm_alloc_t* alloc) {
-    return alloc->stats;  // return the stats as is, user is responsible for
-                          // managing them
+pointer jdm_alloc_get_user_data_custom(jdm_alloc_t* alloc) {
+    return alloc->internal_data;
 }

@@ -1,5 +1,6 @@
 #ifndef JDM_ALLOC_INTERNAL_H
 #define JDM_ALLOC_INTERNAL_H
+#include <pthread.h>
 #include <stddef.h>
 #include <stdint.h>
 
@@ -9,13 +10,15 @@
 struct jdm_alloc_t {
     jdm_alloc_type_t type;
     jdm_alloc_funcs_t funcs;
+    // thread safe bool for state knowledge
+    b8 thread_safe;
+    // thread mutex for save multithread access
+    pthread_mutex_t m;
     // The following pointer is used to hold internal data for the allocator
     // For predefined types, this holds the internal data for the allocator
     // For custom types, this is a pointer to the user-defined data for the
     // allocator
     pointer internal_data;
-    // The following struct is used to hold statistics for the allocator
-    jdm_alloc_stats_t stats;
 };
 
 static inline size_t get_default_alignment() { return sizeof(pointer); };

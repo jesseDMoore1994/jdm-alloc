@@ -101,10 +101,41 @@ static void* pool_calloc(jdm_alloc_t* alloc, size_t num, size_t size) {
     return jdm_alloc_pool_calloc(alloc);
 }
 
+static jdm_alloc_stats_t pool_get_stats(jdm_alloc_t* alloc) {
+    jdm_alloc_stats_t stats = {0};
+    if (!alloc || !alloc->internal_data) {
+        return stats;
+    }
+    if (alloc->type != JDM_ALLOC_POOL) {
+        JDM_LOG_ERROR("Invalid allocator type for jdm_alloc_get_stats_pool");
+        return stats;
+    }
+    jdm_pool_t* pool = (jdm_pool_t*)alloc->internal_data;
+    stats.type = JDM_ALLOC_POOL;
+    stats.pool.pool_capacity = pool->size;
+    stats.pool.chunk_capacity =
+        (pool->size - (pool->start - pool->memory)) / pool->chunk_size;
+
+    // count the number of free chunks
+    size_t free_chunks = 0;
+    jdm_pool_free_node_t* node = pool->head;
+    while (node) {
+        free_chunks++;
+        node = node->next;
+    }
+    stats.pool.chunk_used =
+        (pool->size - (pool->start - pool->memory)) / pool->chunk_size -
+        free_chunks;
+    stats.pool.pool_used = stats.pool.chunk_used * pool->chunk_size;
+
+    return stats;
+}
+
 static jdm_alloc_funcs_t pool_funcs = {.alloc = pool_alloc,
                                        .free = pool_free,
                                        .realloc = pool_realloc,
-                                       .calloc = pool_calloc};
+                                       .calloc = pool_calloc,
+                                       .get_stats = pool_get_stats};
 
 void jdm_alloc_pool_free_all(jdm_alloc_t* alloc) {
     if (!alloc) {
@@ -228,34 +259,4 @@ void jdm_alloc_destroy_pool(jdm_alloc_t* alloc) {
             free(pool->memory);
         }
     }
-}
-
-jdm_alloc_stats_t jdm_alloc_get_stats_pool(jdm_alloc_t* alloc) {
-    jdm_alloc_stats_t stats = {0};
-    if (!alloc || !alloc->internal_data) {
-        return stats;
-    }
-    if (alloc->type != JDM_ALLOC_POOL) {
-        JDM_LOG_ERROR("Invalid allocator type for jdm_alloc_get_stats_pool");
-        return stats;
-    }
-    jdm_pool_t* pool = (jdm_pool_t*)alloc->internal_data;
-    stats.type = JDM_ALLOC_POOL;
-    stats.pool.pool_capacity = pool->size;
-    stats.pool.chunk_capacity =
-        (pool->size - (pool->start - pool->memory)) / pool->chunk_size;
-
-    // count the number of free chunks
-    size_t free_chunks = 0;
-    jdm_pool_free_node_t* node = pool->head;
-    while (node) {
-        free_chunks++;
-        node = node->next;
-    }
-    stats.pool.chunk_used =
-        (pool->size - (pool->start - pool->memory)) / pool->chunk_size -
-        free_chunks;
-    stats.pool.pool_used = stats.pool.chunk_used * pool->chunk_size;
-
-    return stats;
 }

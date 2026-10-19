@@ -23,6 +23,9 @@
 #define b64 u64
 #define pointer void*
 
+#define JDM_TRUE 1
+#define JDM_FALSE 0
+
 // Define function like macros for common utilities
 #define JDM_MIN(a, b) ((a) < (b) ? (a) : (b))
 #define JDM_MAX(a, b) ((a) > (b) ? (a) : (b))
@@ -82,11 +85,47 @@ typedef enum {
 // Create an object to hold the memory allocation internals
 typedef struct jdm_alloc_t jdm_alloc_t;
 
+typedef struct {
+    size_t arena_capacity;
+    size_t arena_used;
+} jdm_alloc_arena_stats_t;
+
+typedef struct {
+    size_t stack_capacity;
+    size_t stack_used;
+} jdm_alloc_stack_stats_t;
+
+typedef struct {
+    size_t pool_capacity;
+    size_t pool_used;
+    size_t chunk_capacity;
+    size_t chunk_used;
+} jdm_alloc_pool_stats_t;
+
+typedef struct {
+    size_t freelist_capacity;
+    size_t freelist_used;
+} jdm_alloc_freelist_stats_t;
+
+typedef pointer jdm_alloc_custom_stats_t;
+
+typedef struct {
+    jdm_alloc_type_t type;
+    union {
+        jdm_alloc_arena_stats_t arena;
+        jdm_alloc_stack_stats_t stack;
+        jdm_alloc_pool_stats_t pool;
+        jdm_alloc_freelist_stats_t freelist;
+        jdm_alloc_custom_stats_t custom;
+    };
+} jdm_alloc_stats_t;
+
 // function pointer types for memory allocation functions
 typedef void* (*jdm_alloc_func_t)(jdm_alloc_t* alloc, size_t size);
 typedef void (*jdm_free_func_t)(jdm_alloc_t* alloc, void* ptr);
 typedef void* (*jdm_realloc_func_t)(jdm_alloc_t* alloc, void* ptr, size_t size);
 typedef void* (*jdm_calloc_func_t)(jdm_alloc_t* alloc, size_t num, size_t size);
+typedef jdm_alloc_stats_t (*jdm_get_stats_func_t)(jdm_alloc_t* alloc);
 
 // struct to hold memory allocation function pointers
 typedef struct {
@@ -94,6 +133,7 @@ typedef struct {
     jdm_free_func_t free;
     jdm_realloc_func_t realloc;
     jdm_calloc_func_t calloc;
+    jdm_get_stats_func_t get_stats;
 } jdm_alloc_funcs_t;
 
 typedef struct {
@@ -127,6 +167,7 @@ typedef struct {
 
 typedef struct {
     jdm_alloc_type_t type;
+    b8 thread_safe; // default 0 (false)
     union {
         jdm_alloc_arena_config_t arena;
         jdm_alloc_stack_config_t stack;
@@ -143,45 +184,6 @@ void* jdm_alloc(jdm_alloc_t* alloc, size_t size);
 void jdm_free(jdm_alloc_t* alloc, void* ptr);
 void* jdm_realloc(jdm_alloc_t* alloc, void* ptr, size_t size);
 void* jdm_calloc(jdm_alloc_t* alloc, size_t num, size_t size);
-
-typedef struct {
-    size_t arena_capacity;
-    size_t arena_used;
-} jdm_alloc_arena_stats_t;
-
-typedef struct {
-    size_t stack_capacity;
-    size_t stack_used;
-} jdm_alloc_stack_stats_t;
-
-typedef struct {
-    size_t pool_capacity;
-    size_t pool_used;
-    size_t chunk_capacity;
-    size_t chunk_used;
-} jdm_alloc_pool_stats_t;
-
-typedef struct {
-    size_t freelist_capacity;
-    size_t freelist_used;
-} jdm_alloc_freelist_stats_t;
-
-typedef struct {
-    size_t custom_capacity;
-    size_t custom_used;
-} jdm_alloc_custom_stats_t;
-
-// provide a set of structures for statistics and debugging
-typedef struct {
-    jdm_alloc_type_t type;
-    union {
-        jdm_alloc_arena_stats_t arena;
-        jdm_alloc_stack_stats_t stack;
-        jdm_alloc_pool_stats_t pool;
-        jdm_alloc_freelist_stats_t freelist;
-        jdm_alloc_custom_stats_t custom;
-    };
-} jdm_alloc_stats_t;
 
 jdm_alloc_stats_t jdm_alloc_get_stats(jdm_alloc_t* alloc);
 

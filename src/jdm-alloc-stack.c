@@ -193,10 +193,27 @@ static void* stack_calloc(jdm_alloc_t* alloc, size_t num, size_t size) {
     }
 }
 
+static jdm_alloc_stats_t stack_get_stats(jdm_alloc_t* alloc) {
+    jdm_alloc_stats_t stats = {0};
+    if (!alloc || !alloc->internal_data) {
+        return stats;
+    }
+    if (alloc->type != JDM_ALLOC_STACK) {
+        JDM_LOG_ERROR("Invalid allocator type for jdm_alloc_get_stats_stack");
+        return stats;
+    }
+    jdm_stack_t* stack = (jdm_stack_t*)alloc->internal_data;
+    stats.type = JDM_ALLOC_STACK;
+    stats.stack.stack_capacity = stack->size - stack->start;
+    stats.stack.stack_used = stack->offset - stack->start;
+    return stats;
+}
+
 static jdm_alloc_funcs_t stack_funcs = {.alloc = stack_alloc,
                                         .free = stack_free,
                                         .realloc = stack_realloc,
-                                        .calloc = stack_calloc};
+                                        .calloc = stack_calloc,
+                                        .get_stats = stack_get_stats};
 
 jdm_alloc_t* jdm_alloc_create_stack(jdm_alloc_config_t cfg) {
     size_t capacity =
@@ -256,20 +273,4 @@ void jdm_alloc_destroy_stack(jdm_alloc_t* alloc) {
             free(stack->memory);
         }
     }
-}
-
-jdm_alloc_stats_t jdm_alloc_get_stats_stack(jdm_alloc_t* alloc) {
-    jdm_alloc_stats_t stats = {0};
-    if (!alloc || !alloc->internal_data) {
-        return stats;
-    }
-    if (alloc->type != JDM_ALLOC_STACK) {
-        JDM_LOG_ERROR("Invalid allocator type for jdm_alloc_get_stats_stack");
-        return stats;
-    }
-    jdm_stack_t* stack = (jdm_stack_t*)alloc->internal_data;
-    stats.type = JDM_ALLOC_STACK;
-    stats.stack.stack_capacity = stack->size - stack->start;
-    stats.stack.stack_used = stack->offset - stack->start;
-    return stats;
 }

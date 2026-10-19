@@ -11,29 +11,45 @@
 #include "jdm-alloc-unimplemented.h"
 
 jdm_alloc_t* jdm_alloc_create(const jdm_alloc_config_t cfg) {
-    if (cfg.type == JDM_ALLOC_CUSTOM && !cfg.custom.funcs) {
-        return NULL;  // custom allocator requires function pointers
-    }
-
+    jdm_alloc_t* alloc = NULL;
     switch (cfg.type) {
         case JDM_ALLOC_ARENA:
-            return jdm_alloc_create_arena(cfg);
+            alloc = jdm_alloc_create_arena(cfg);
+            break;
         case JDM_ALLOC_STACK:
-            return jdm_alloc_create_stack(cfg);
+            alloc = jdm_alloc_create_stack(cfg);
+            break;
         case JDM_ALLOC_POOL:
-            return jdm_alloc_create_pool(cfg);
+            alloc = jdm_alloc_create_pool(cfg);
+            break;
         case JDM_ALLOC_FREELIST:
-            return jdm_alloc_create_freelist(cfg);
+            alloc = jdm_alloc_create_freelist(cfg);
+            break;
         case JDM_ALLOC_CUSTOM:
-            return jdm_alloc_create_custom(cfg);
+            alloc = jdm_alloc_create_custom(cfg);
+            break;
         default:
-            return NULL;  // invalid type
+            break;
     }
+
+    if (alloc == NULL) return alloc;
+
+    // Now that allocator is built, init mutex if needed
+    alloc->thread_safe = cfg.thread_safe;
+    if(alloc->thread_safe) {
+        pthread_mutex_init(&(alloc->m), NULL);
+    }
+
+    return alloc;
 }
 
 void jdm_alloc_destroy(jdm_alloc_t* alloc) {
     if (!alloc) {
         return;
+    }
+
+    if (alloc->thread_safe) {
+        pthread_mutex_destroy(&(alloc->m));
     }
 
     switch (alloc->type) {
@@ -59,52 +75,74 @@ void jdm_alloc_destroy(jdm_alloc_t* alloc) {
 }
 
 void* jdm_alloc(jdm_alloc_t* alloc, size_t size) {
+    if(alloc->thread_safe) {
+        pthread_mutex_lock(&(alloc->m));
+    }
+
     void* ptr = alloc->funcs.alloc(alloc, size);
     if (!ptr) {
         return NULL;
     }
+
+    if(alloc->thread_safe) {
+        pthread_mutex_unlock(&(alloc->m));
+    }
+
     return ptr;
 }
 
-void jdm_free(jdm_alloc_t* alloc, void* ptr) { alloc->funcs.free(alloc, ptr); }
+void jdm_free(jdm_alloc_t* alloc, void* ptr) {
+    if(alloc->thread_safe) {
+        pthread_mutex_lock(&(alloc->m));
+    }
+
+    alloc->funcs.free(alloc, ptr);
+
+    if(alloc->thread_safe) {
+        pthread_mutex_unlock(&(alloc->m));
+    }
+}
 
 void* jdm_realloc(jdm_alloc_t* alloc, void* ptr, size_t size) {
+    if(alloc->thread_safe) {
+        pthread_mutex_lock(&(alloc->m));
+    }
+
     void* new_ptr = alloc->funcs.realloc(alloc, ptr, size);
     if (!new_ptr) {
         return NULL;
+    }
+
+    if(alloc->thread_safe) {
+        pthread_mutex_unlock(&(alloc->m));
     }
     return new_ptr;
 }
 
 void* jdm_calloc(jdm_alloc_t* alloc, size_t num, size_t size) {
+    if(alloc->thread_safe) {
+        pthread_mutex_lock(&(alloc->m));
+    }
+
     void* ptr = alloc->funcs.calloc(alloc, num, size);
     if (!ptr) {
         return NULL;
+    }
+
+    if(alloc->thread_safe) {
+        pthread_mutex_unlock(&(alloc->m));
     }
     return ptr;
 }
 
 jdm_alloc_stats_t jdm_alloc_get_stats(jdm_alloc_t* alloc) {
-    jdm_alloc_stats_t stats = {0};
-    switch (alloc->type) {
-        case JDM_ALLOC_ARENA:
-            stats = jdm_alloc_get_stats_arena(alloc);
-            break;
-        case JDM_ALLOC_STACK:
-            stats = jdm_alloc_get_stats_stack(alloc);
-            break;
-        case JDM_ALLOC_POOL:
-            stats = jdm_alloc_get_stats_pool(alloc);
-            break;
-        case JDM_ALLOC_FREELIST:
-            stats = jdm_alloc_get_stats_freelist(alloc);
-            break;
-        case JDM_ALLOC_CUSTOM:
-            stats = jdm_alloc_get_stats_custom(alloc);
-            break;
-        default:
-            // invalid type, return empty stats
-            break;
+    if(alloc->thread_safe) {
+        pthread_mutex_lock(&(alloc->m));
     }
-    return stats;
+
+    return alloc->funcs.get_stats(alloc);
+
+    if(alloc->thread_safe) {
+        pthread_mutex_unlock(&(alloc->m));
+    }
 }

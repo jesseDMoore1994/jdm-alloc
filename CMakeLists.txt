@@ -8,6 +8,36 @@ set(CMAKE_C_STANDARD 11)
 
 set(CMAKE_REQUIRED_LIBRARIES jdm-log)
 
+option(ENABLE_ASAN "Enable Address Sanitizer" OFF)
+
+if(ENABLE_ASAN)
+    message(STATUS "Address sanitizer enabled")
+    
+    # Add sanitizer flags for both compiling and linking
+    add_compile_options(-fsanitize=address -fno-omit-frame-pointer)
+    add_link_options(-fsanitize=address)
+endif()
+
+option(ENABLE_UBSAN "Enable UB Sanitizer" OFF)
+
+if(ENABLE_UBSAN)
+    message(STATUS "UB sanitizer enabled")
+    
+    # Add sanitizer flags for both compiling and linking
+    add_compile_options(-fsanitize=undefined -fno-omit-frame-pointer)
+    add_link_options(-fsanitize=undefined)
+endif()
+
+option(ENABLE_TSAN "Enable Thread Sanitizer" OFF)
+
+if(ENABLE_TSAN)
+    message(STATUS "Thread sanitizer enabled")
+    
+    # Add sanitizer flags for both compiling and linking
+    add_compile_options(-fsanitize=thread -fno-omit-frame-pointer)
+    add_link_options(-fsanitize=thread)
+endif()
+
 # Add the source files for the jdm-alloc library
 set(SOURCES
     src/jdm-alloc-internal.h
@@ -48,6 +78,10 @@ add_test(NAME test-jdm-alloc-pool COMMAND test-jdm-alloc-pool)
 add_executable(test-jdm-alloc-freelist tests/test-jdm-alloc-freelist.c)
 target_link_libraries(test-jdm-alloc-freelist PRIVATE jdm-alloc jdm-log)
 add_test(NAME test-jdm-alloc-freelist COMMAND test-jdm-alloc-freelist)
+
+add_executable(test-jdm-alloc-threaded tests/test-jdm-alloc-threaded.c)
+target_link_libraries(test-jdm-alloc-threaded PRIVATE jdm-alloc jdm-log)
+add_test(NAME test-jdm-alloc-threaded COMMAND test-jdm-alloc-threaded)
 
 # Enable testing
 enable_testing()
