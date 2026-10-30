@@ -1,8 +1,26 @@
 {
   "nodes": {
-    "jdm-log": {
+    "jdm-defs": {
       "inputs": {
         "nixpkgs": "nixpkgs"
+      },
+      "locked": {
+        "lastModified": 1793332858,
+        "narHash": "sha256-HkN5bhxBzQJI7/NrbPGUV1K0flG13yGLUhVoZyXbyoQ=",
+        "owner": "jesseDMoore1994",
+        "repo": "jdm-defs",
+        "rev": "9ca4e543f01f7430f2a05909cbeb548b51a829e5",
+        "type": "github"
+      },
+      "original": {
+        "owner": "jesseDMoore1994",
+        "repo": "jdm-defs",
+        "type": "github"
+      }
+    },
+    "jdm-log": {
+      "inputs": {
+        "nixpkgs": "nixpkgs_2"
       },
       "locked": {
         "lastModified": 1792369968,
@@ -36,6 +54,22 @@
     },
     "nixpkgs_2": {
       "locked": {
+        "lastModified": 1791956154,
+        "narHash": "sha256-jBYGPi4udQ9uo4KQp9m2J0546nJVQitG15gvZSaVVAs=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "55bfb4d7437bd4e09ab7cba58a43bd68eb310044",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "ref": "nixos-unstable",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "nixpkgs_3": {
+      "locked": {
         "lastModified": 1792094642,
         "narHash": "sha256-zp8ToDMnqZcu4o4IH9pdwXFXGp7yLm/M0dEnNWnyd7I=",
         "owner": "NixOS",
@@ -52,8 +86,9 @@
     },
     "root": {
       "inputs": {
+        "jdm-defs": "jdm-defs",
         "jdm-log": "jdm-log",
-        "nixpkgs": "nixpkgs_2"
+        "nixpkgs": "nixpkgs_3"
       }
     }
   },
