@@ -58,7 +58,7 @@ void jdm_alloc_destroy(jdm_alloc_t* alloc) {
 
     switch (alloc->type) {
         case JDM_ALLOC_SYSTEM:
-            jdm_alloc_destroy_arena(alloc);
+            jdm_alloc_destroy_system(alloc);
             break;
         case JDM_ALLOC_ARENA:
             jdm_alloc_destroy_arena(alloc);

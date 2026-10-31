@@ -31,7 +31,7 @@ static int test_system_allocator(void) {
     };
     jdm_alloc_t* alloc = jdm_alloc_create(cfg);
     if (!alloc) {
-        JDM_LOG_ERROR("Failed to create custom jdm_alloc");
+        JDM_LOG_ERROR("Failed to create system jdm_alloc");
         return EXIT_FAILURE;
     }
 
@@ -39,7 +39,7 @@ static int test_system_allocator(void) {
     size_t size = 1024;
     void* ptr = jdm_alloc(alloc, size);
     if (!ptr) {
-        JDM_LOG_ERROR("Failed to allocate memory using custom jdm_alloc");
+        JDM_LOG_ERROR("Failed to allocate memory using system jdm_alloc");
         jdm_alloc_destroy(alloc);
         return EXIT_FAILURE;
     }
