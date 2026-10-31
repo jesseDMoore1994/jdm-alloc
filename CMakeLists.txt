@@ -41,6 +41,7 @@ endif()
 # Add the source files for the jdm-alloc library
 set(SOURCES
     src/jdm-alloc-internal.h
+    src/jdm-alloc-system.c
     src/jdm-alloc-arena.c
     src/jdm-alloc-stack.c
     src/jdm-alloc-pool.c

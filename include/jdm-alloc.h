@@ -4,7 +4,7 @@
 
 // types of allocator supported
 typedef enum {
-    JDM_ALLOC_DEFAULT = 0,
+    JDM_ALLOC_SYSTEM = 0,
     JDM_ALLOC_ARENA,
     JDM_ALLOC_STACK,
     JDM_ALLOC_POOL,

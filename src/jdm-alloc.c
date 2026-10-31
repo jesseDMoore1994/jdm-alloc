@@ -2,6 +2,7 @@
 
 #include <stdio.h>
 
+#include "jdm-alloc-system.h"
 #include "jdm-alloc-arena.h"
 #include "jdm-alloc-custom.h"
 #include "jdm-alloc-freelist.h"
@@ -13,6 +14,9 @@
 jdm_alloc_t* jdm_alloc_create(const jdm_alloc_config_t cfg) {
     jdm_alloc_t* alloc = NULL;
     switch (cfg.type) {
+        case JDM_ALLOC_SYSTEM:
+            alloc = jdm_alloc_create_system(cfg);
+            break;
         case JDM_ALLOC_ARENA:
             alloc = jdm_alloc_create_arena(cfg);
             break;
@@ -53,6 +57,9 @@ void jdm_alloc_destroy(jdm_alloc_t* alloc) {
     }
 
     switch (alloc->type) {
+        case JDM_ALLOC_SYSTEM:
+            jdm_alloc_destroy_arena(alloc);
+            break;
         case JDM_ALLOC_ARENA:
             jdm_alloc_destroy_arena(alloc);
             break;
